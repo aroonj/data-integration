@@ -1,12 +1,24 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.servnize</groupId>
-  <artifactId>db-util</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
-  <name>Database Utilility</name>
-  <description>Database Utilility</description>
-  <modules>
-  	<module>camel-db-util</module>
-  </modules>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.servnize</groupId>
+	<artifactId>db-util</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>Database Utility</name>
+	<description>Database Utility</description>
+	<properties>
+		<jetty.version>9.3.15.v20161220</jetty.version>
+		<camel.version>2.18.1</camel.version>
+		<commons-cli.version>1.3.1</commons-cli.version>
+		<commons-dbcp2.version>2.1.1</commons-dbcp2.version>
+		<!-- <log4j.version>x</log4j.version> <junit.version>x</junit.version> -->
+		<postgresql.version>9.4.1212</postgresql.version>
+		<mssql.version>1.3.1</mssql.version>
+		<mysql.version>5.1.6</mysql.version>
+	</properties>
+	<modules>
+		<module>camel-db-util</module>
+	</modules>
+	<url>http://www.servnize.com</url>
 </project>
