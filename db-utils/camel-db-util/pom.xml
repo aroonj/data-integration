@@ -15,7 +15,7 @@
 	<packaging>jar</packaging>
 
 
-	<name>A Camel Spring Route</name>
+	<name>A Camel Spring Launcher</name>
 	<url>http://www.servnize.com</url>
 
 	<properties>
@@ -175,6 +175,46 @@
 				<groupId>org.apache.camel</groupId>
 				<artifactId>camel-maven-plugin</artifactId>
 				<version>2.18.1</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.5.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>com.servnize.camel.db.util.CamelApplicationCtl</mainClass>
+
+					<arguments>
+						<argument>-f</argument>
+						<argument>/Users/aroonjanthong/git/data-integration/db-utils/src/test/resources/etc/application.conf</argument>
+						<argument>-r</argument>
+					</arguments>
+					<systemProperties>
+						<systemProperty>
+							<key>configurationFile</key>
+							<value>/Users/aroonjanthong/git/data-integration/db-utils/src/test/resources/etc/log4j2.properties</value>
+						</systemProperty>
+						<systemProperty>
+							<key>log.dir</key>
+							<value>/Users/aroonjanthong/git/data-integration/db-utils/logs</value>
+						</systemProperty>
+						<systemProperty>
+							<key>conf.dir</key>
+							<value>/Users/aroonjanthong/git/data-integration/db-utils/src/test/resources/etc</value>
+						</systemProperty>
+						<systemProperty>
+							<key>ext.dir</key>
+							<value>/Users/aroonjanthong/Documents/workspace-eip/eip/app/ext.lib</value>
+						</systemProperty>
+					</systemProperties>
+				</configuration>
 			</plugin>
 
 

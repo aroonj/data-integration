@@ -19,6 +19,7 @@
 	</properties>
 	<modules>
 		<module>camel-db-util</module>
+		<module>app-dist</module>
 	</modules>
 	<url>http://www.servnize.com</url>
 </project>
