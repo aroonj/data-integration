@@ -80,7 +80,18 @@ public class CamelApplicationCtl {
 	public static void main(String[] args) {
 
 		try {
+			log.debug("Register shutdown signal hook.");
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				@Override
+				public void run() {
+					log.info("Shutdown signal hooked.");
+					app.shutdown();
+					log.info("Gracefully completed shutdown");
+				}
+			});
+
 			app.parse(args);
+
 			if (AdminCommand.SHUTDOWN.equals(app.adminCommand)) {
 				// TODO shutdown
 				log.info("Shutdown application ...");
@@ -161,9 +172,10 @@ public class CamelApplicationCtl {
 			int[] cmd = ctl.listen();
 			log.info("command {} {}", cmd[0], cmd[1]);
 			if (SimpleCommands.isStop(cmd)) {
-				ctl.stop();
-				main.getApplicationContext().stop();
-				main.stop();
+				/*
+				 * ctl.stop(); main.getApplicationContext().stop(); main.stop();
+				 */
+				shutdown();
 			}
 		}
 	}
@@ -322,12 +334,11 @@ public class CamelApplicationCtl {
 					error++;
 				}
 			} else {
-
-				if (key.equals("secret.key")) {
-					log.info("Configure {} = {}", key, "***");
-				} else {
-					log.info("Configure {} = {}", key, val);
-				}
+				/*
+				 * if (key.equals("secret.key")) { log.info("Configure {} = {}",
+				 * key, "***"); } else { log.info("Configure {} = {}", key,
+				 * val); }
+				 */
 
 				switch (key) {
 				case "camel.conf":
@@ -475,6 +486,11 @@ public class CamelApplicationCtl {
 
 	}
 
+	/**
+	 * Send Command to listener port for shutdown.
+	 * 
+	 * @throws Exception
+	 */
 	protected void adminShutdown() throws Exception {
 
 		Properties p = loadProperties(configuration);
@@ -530,11 +546,30 @@ public class CamelApplicationCtl {
 
 				tmpk = "{" + EXT_DIR + "}";
 				if (v.contains(tmpk)) {
-					v = v.replace(tmpk, confdir);
+					v = v.replace(tmpk, extdir);
 					pro.setProperty(key, v);
 					// log.debug("ext.dir={}, extension directory ={}", extdir,
 					// v);
 					log.debug("Set properties value of {} = {}", key, v);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Graceful shutdown
+	 */
+	void shutdown() {
+		if (ctl != null) {
+			if (!ctl.isStop()) {
+				ctl.stop();
+				try {
+					if (main != null) {
+						main.getApplicationContext().stop();
+						main.stop();
+					}
+				} catch (Exception e) {
+
 				}
 			}
 		}
