@@ -84,7 +84,9 @@ public class ListenCtl {
 			stop = true;
 			state = 1;
 			try {
-				ssocket.close();
+				if (ssocket != null) {
+					ssocket.close();
+				}
 			} catch (IOException e) {
 				log.error("Close server socket fail.", e);
 			}

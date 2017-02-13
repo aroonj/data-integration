@@ -107,6 +107,9 @@ public class CamelApplicationCtl {
 		} catch (Exception e) {
 			log.error("Start application fail", e);
 			return;
+		}finally {
+			
+			app.shutdown();
 		}
 
 	}
@@ -519,6 +522,8 @@ public class CamelApplicationCtl {
 			return;
 		}
 
+		// log.debug("System properties {} = {}",CONF_DIR,confdir);
+
 		Set<String> keys = pro.stringPropertyNames();
 		String tmpk = null;
 
@@ -531,7 +536,7 @@ public class CamelApplicationCtl {
 			}
 
 			if (confdir != null) {
-
+				log.debug("System properties {} = {}", CONF_DIR, confdir);
 				tmpk = "{" + CONF_DIR + "}";
 				if (v.contains(tmpk)) {
 					v = v.replace(tmpk, confdir);
@@ -543,7 +548,7 @@ public class CamelApplicationCtl {
 			}
 
 			if (extdir != null) {
-
+				log.debug("System properties {} = {}", EXT_DIR, extdir);
 				tmpk = "{" + EXT_DIR + "}";
 				if (v.contains(tmpk)) {
 					v = v.replace(tmpk, extdir);

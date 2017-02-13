@@ -34,44 +34,6 @@
         <version>2.18.1</version>
       </plugin>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.5.0</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>java</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <mainClass>com.servnize.camel.db.util.CamelApplicationCtl</mainClass>
-          <arguments>
-            <argument>-f</argument>
-            <argument>/Users/aroonjanthong/git/data-integration/db-utils/src/test/resources/etc/application.conf</argument>
-            <argument>-r</argument>
-          </arguments>
-          <systemProperties>
-            <systemProperty>
-              <key>configurationFile</key>
-              <value>/Users/aroonjanthong/git/data-integration/db-utils/src/test/resources/etc/log4j2.properties</value>
-            </systemProperty>
-            <systemProperty>
-              <key>log.dir</key>
-              <value>/Users/aroonjanthong/git/data-integration/db-utils/logs</value>
-            </systemProperty>
-            <systemProperty>
-              <key>conf.dir</key>
-              <value>/Users/aroonjanthong/git/data-integration/db-utils/src/test/resources/etc</value>
-            </systemProperty>
-            <systemProperty>
-              <key>ext.dir</key>
-              <value>/Users/aroonjanthong/Documents/workspace-eip/eip/app/ext.lib</value>
-            </systemProperty>
-          </systemProperties>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>2.4.3</version>
         <executions>
@@ -95,6 +57,98 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>RunApplication</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.5.0</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>java</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <mainClass>com.servnize.camel.db.util.CamelApplicationCtl</mainClass>
+              <arguments>
+                <argument>-f</argument>
+                <argument>${project.basedir}/src/test/resources/etc/application.conf</argument>
+                <argument>-r</argument>
+              </arguments>
+              <systemProperties>
+                <systemProperty>
+                  <key>log4j.configurationFile</key>
+                  <value>${project.basedir}/src/test/resources/etc/log4j2.properties</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>log.dir</key>
+                  <value>/${project.basedir}/logs</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>conf.dir</key>
+                  <value>${project.basedir}/src/test/resources/etc</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>ext.dir</key>
+                  <value>${project.basedir}/ext.lib</value>
+                </systemProperty>
+              </systemProperties>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>StopApplication</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.5.0</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>java</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <mainClass>com.servnize.camel.db.util.CamelApplicationCtl</mainClass>
+              <arguments>
+                <argument>-f</argument>
+                <argument>${project.basedir}/src/test/resources/etc/application.conf</argument>
+                <argument>-s</argument>
+              </arguments>
+              <systemProperties>
+                <systemProperty>
+                  <key>configurationFile</key>
+                  <value>${project.basedir}/src/test/resources/etc/log4j2.properties</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>log.dir</key>
+                  <value>/${project.basedir}/logs</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>conf.dir</key>
+                  <value>${project.basedir}/src/test/resources/etc</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>ext.dir</key>
+                  <value>${project.basedir}/ext.lib</value>
+                </systemProperty>
+              </systemProperties>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   <dependencies>
     <dependency>
       <groupId>org.apache.camel</groupId>

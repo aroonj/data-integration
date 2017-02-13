@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context -->
+<!-- <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd 
+	http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd"> -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:camel="http://camel.apache.org/schema/spring"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+
+	<bean id="dataSource1" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="org.postgresql.Driver" />
+		<property name="url" value="jdbc:postgresql://localhost:5432/db" />
+		<property name="username" value="xxx" />
+		<property name="password" value="xxx" />
+		<property name="initialSize" value="1" />
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="2" />
+	</bean>
+
+	<bean id="dataSource2" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="org.postgresql.Driver" />
+		<property name="url" value="jdbc:postgresql://localhost:5432/db" />
+		<property name="username" value="xxx" />
+		<property name="password" value="xxx" />
+		<property name="initialSize" value="1" />
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="2" />
+	</bean>
+
+	<bean id="dataSource3" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="org.postgresql.Driver" />
+		<property name="url" value="jdbc:postgresql://localhost:5432/db" />
+		<property name="username" value="xxx" />
+		<property name="password" value="xxx" />
+		<property name="initialSize" value="1" />
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="2" />
+	</bean>
+
+	<bean id="dataSourceRO2" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url"
+			value="jdbc:mysql://localhost:3306/db?zeroDateTimeBehavior=convertToNull" />
+		<property name="username" value="xxx" />
+		<property name="password" value="xxx" />
+		<property name="initialSize" value="1" />
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="2" />
+	</bean>
+
+
+	<bean id="locker" class="com.servnize.camel.db.util.LockerBean"
+		scope="singleton">
+
+	</bean>
+
+	<!-- <bean id="delay" class="com.servnize.camel.db.util.DelayBean" scope="singleton"> 
+		</bean> -->
+
+	<bean id="quartz2" class="org.apache.camel.component.quartz2.QuartzComponent">
+		<property name="startDelayedSeconds" value="5" />
+	</bean>
+
+	<bean id="sqlSrcTest" class="org.apache.camel.component.sql.SqlComponent">
+		<property name="dataSource" ref="dataSource3" />
+	</bean>
+
+	<bean id="sqlSrcRO2" class="org.apache.camel.component.sql.SqlComponent">
+		<property name="dataSource" ref="dataSourceRO2" />
+	</bean>
+
+	<camelContext xmlns="http://camel.apache.org/schema/spring">
+
+		<!-- use Camel property placeholder loaded from the given file -->
+		<!-- <propertyPlaceholder id="placeholder" location="classpath:sql.properties" 
+			/> -->
+
+		<propertyPlaceholder id="placeholder"
+			location="file:${conf.dir}/sql.properties" />
+
+
+		<route id="timercopy">
+
+
+			<from uri="timer:import?period=10s&amp;delay=10s" />
+
+			<!-- <from uri="quartz2://myGroup/myTimerName?cron=0/2+*+*+*+*+?" /> -->
+
+			<log message="start"></log>
+			<!-- Try to lock first -->
+			<to uri="bean:locker?method=lock" />
+
+			<camel:doTry>
+				<camel:choice>
+					<camel:when>
+
+						<camel:simple>${header.LOCKER_ID} != null </camel:simple>
+
+						<log message="Lock record ${header.LOCKER_ID}"></log>
+
+						<!-- <to uri="sqlSrcTest:{{sql.leavetransactions}}" /> -->
+						<to uri="sqlSrcRO2:{{ro2.sql.source}}" />
+
+						<camel:split>
+							<simple>${in.body}</simple>
+							<log message="Data record ${body}" loggingLevel="DEBUG"></log>
+
+							<!-- TODO more -->
+						</camel:split>
+
+
+						<camel:setBody>
+							<camel:simple>Copy database record from TESTDB completed by ${header.LOCKER_ID}</camel:simple>
+						</camel:setBody>
+
+					</camel:when>
+
+					<camel:otherwise>
+						<log message="Lock fail" loggingLevel="ERROR"></log>
+						<camel:setBody>
+							<camel:simple>Error lock fail, on copy database record from TESTDB. Already run by ${header.LOCKER_ID}</camel:simple>
+						</camel:setBody>
+					</camel:otherwise>
+
+				</camel:choice>
+
+				<camel:doCatch>
+
+					<camel:exception>java.lang.Exception</camel:exception>
+					<log message="Exeption error" loggingLevel="ERROR" />
+					<camel:setBody>
+						<camel:simple>${body} Exception error message ${header.LOCKER_ID}</camel:simple>
+					</camel:setBody>
+
+				</camel:doCatch>
+
+				<camel:doFinally>
+					<to uri="bean:locker?method=release" />
+
+					<log message="Lock record ${header.LOCKER_ID}" />
+					
+					<to
+						uri="smtp://smtp.jasmine.com:25?to=aroon.j@jasmine.com&amp;from=aroon.j@jasmine.com&amp;subject=camel" />
+				</camel:doFinally>
+			</camel:doTry>
+
+
+		</route>
+
+	</camelContext>
+
+</beans>

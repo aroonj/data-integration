@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context -->
+<!-- <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd 
+	http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd"> -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:camel="http://camel.apache.org/schema/spring"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+	<!-- spring transaction manager -->
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceHsql" />
+
+	</bean>
+
+	<!-- datasource to the database -->
+	<bean id="dataSourceHsql"
+		class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+		<property name="driverClass" value="org.hsqldb.jdbcDriver" />
+		<property name="url" value="jdbc:hsqldb:mem:camel" />
+		<property name="username" value="sa" />
+		<property name="password" value="" />
+	</bean>
+
+
+	<bean id="dataSource1" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="org.postgresql.Driver" />
+		<property name="url" value="jdbc:postgresql://localhost:5432/db" />
+		<property name="username" value="xxx" />
+		<property name="password" value="xxx" />
+		<property name="initialSize" value="1" />
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="2" />
+	</bean>
+
+	<bean id="dataSource2" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="org.postgresql.Driver" />
+		<property name="url" value="jdbc:postgresql://localhost:5432/db" />
+		<property name="username" value="xxx" />
+		<property name="password" value="xxx" />
+		<property name="initialSize" value="1" />
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="2" />
+	</bean>
+
+	<bean id="dataSource3" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="org.postgresql.Driver" />
+		<property name="url" value="jdbc:postgresql://localhost:5432/db" />
+		<property name="username" value="xxx" />
+		<property name="password" value="xxx" />
+		<property name="initialSize" value="1" />
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="2" />
+	</bean>
+
+	<bean id="dataSourceRO2" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url"
+			value="jdbc:mysql://localhost:3306/db?zeroDateTimeBehavior=convertToNull" />
+		<property name="username" value="xxx" />
+		<property name="password" value="xxx" />
+		<property name="initialSize" value="1" />
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="2" />
+	</bean>
+
+
+	<bean id="locker" class="com.servnize.camel.db.util.LockerBean"
+		scope="singleton">
+
+	</bean>
+	<bean id="listtomap" class="com.servnize.camel.db.util.ListToMapConvertor">
+		<property name="names" value="code,name" />
+	</bean>
+
+
+	<bean id="quartz2" class="org.apache.camel.component.quartz2.QuartzComponent">
+		<property name="startDelayedSeconds" value="5" />
+	</bean>
+
+	<bean id="sqlDataSourceHsql" class="org.apache.camel.component.sql.SqlComponent">
+		<property name="dataSource" ref="dataSourceHsql" />
+	</bean>
+
+	<bean id="sqlSrcTest" class="org.apache.camel.component.sql.SqlComponent">
+		<property name="dataSource" ref="dataSource3" />
+	</bean>
+
+	<bean id="sqlSrcRO2" class="org.apache.camel.component.sql.SqlComponent">
+		<property name="dataSource" ref="dataSourceRO2" />
+	</bean>
+
+	<camelContext xmlns="http://camel.apache.org/schema/spring">
+
+		<propertyPlaceholder id="placeholder"
+			location="file:${conf.dir}/sql.properties" />
+
+
+		<camel:route id="notify" startupOrder="1">
+			<!-- Email Notify -->
+			<camel:from uri="direct:notify" />
+			<to
+				uri="smtp://smtp.jasmine.com:25?to=aroon.j@jasmine.com&amp;from=aroon.j@jasmine.com&amp;subject=camel notification" />
+		</camel:route>
+
+		<!-- <camel:route id="createSampleDataTable" startupOrder="2" autoStartup="true"> 
+			<from uri="timer:runOnce?repeatCount=1&amp;delay=5s" /> <camel:log message="create 
+			new table is starting" /> <camel:to uri="sqlDataSourceHsql:{{db.create.sequence.sample.data}}" 
+			/> <camel:to uri="sqlDataSourceHsql:{{db.create.table.sample.data}}" /> <camel:setBody> 
+			<camel:simple>CREATE new table with SQL db.create.table.sample.data</camel:simple> 
+			</camel:setBody> <camel:log message="${body}" loggingLevel="DEBUG"></camel:log> 
+			<camel:to uri="direct:notify" /> </camel:route> -->
+
+		<camel:route id="referenceData" startupOrder="2"
+			autoStartup="true">
+			<!-- CREATE TABLE -->
+			<from uri="timer:runOnce?repeatCount=1&amp;delay=5s" />
+			<camel:log message="create new table is starting" />
+			<camel:to uri="sqlDataSourceHsql:{{db.ref.tb_country}}" />
+			<camel:log message="Table tb_country is created" />
+			<camel:setBody>
+				<camel:simple>CREATE new table with SQL db.create.table.sample.data</camel:simple>
+			</camel:setBody>
+
+			<camel:log message="${body}" loggingLevel="DEBUG"></camel:log>
+			<camel:to uri="direct:notify" />
+		</camel:route>
+
+
+		<route id="readcsv">
+			<camel:from uri="file:src/data/?fileName=countries.csv&amp;noop=true" />
+
+
+			<camel:unmarshal>
+				<camel:csv delimiter="|" />
+			</camel:unmarshal>
+			<camel:split>
+				<camel:simple>
+					${in.body}
+				</camel:simple>
+
+				<camel:log message="${body}" />
+				<to uri="bean:listtomap?method=convert" />
+				<camel:log message="${body}" />
+			</camel:split>
+			<camel:log message="${body}" />
+
+
+		</route>
+
+		<route id="timercopy" startupOrder="3">
+
+
+			<from uri="timer:import?period=20s&amp;delay=10s" />
+
+			<!-- <from uri="quartz2://myGroup/myTimerName?cron=0/2+*+*+*+*+?" /> -->
+
+			<log message="start"></log>
+			<!-- Try to lock first -->
+			<to uri="bean:locker?method=lock" />
+
+			<camel:doTry>
+				<camel:choice>
+					<camel:when>
+
+						<camel:simple>${header.LOCKER_ID} != null </camel:simple>
+
+						<log message="Lock record ${header.LOCKER_ID}"></log>
+
+
+						<to uri="sqlSrcRO2:{{ro2.sql.source}}" />
+
+						<camel:split>
+							<simple>${in.body}</simple>
+							<log message="Data record ${body}" loggingLevel="DEBUG"></log>
+
+							<!-- TODO more -->
+						</camel:split>
+
+
+						<camel:setBody>
+							<camel:simple>Copy database record from TESTDB completed by ${header.LOCKER_ID}</camel:simple>
+						</camel:setBody>
+
+					</camel:when>
+
+					<camel:otherwise>
+						<log message="Lock fail" loggingLevel="ERROR"></log>
+						<camel:setBody>
+							<camel:simple>Error lock fail, on copy database record from TESTDB. Already run by ${header.LOCKER_ID}</camel:simple>
+						</camel:setBody>
+					</camel:otherwise>
+
+				</camel:choice>
+
+				<camel:doCatch>
+
+					<camel:exception>java.lang.Exception</camel:exception>
+					<log message="Exeption error" loggingLevel="ERROR" />
+					<camel:setBody>
+						<camel:simple>${body} Exception error message ${header.LOCKER_ID}</camel:simple>
+					</camel:setBody>
+
+				</camel:doCatch>
+
+				<camel:doFinally>
+					<to uri="bean:locker?method=release" />
+
+					<log message="Lock record ${header.LOCKER_ID}" />
+
+					<camel:to uri="direct:notify" />
+				</camel:doFinally>
+			</camel:doTry>
+
+
+		</route>
+
+	</camelContext>
+
+</beans>
