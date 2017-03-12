@@ -20,6 +20,11 @@ public class ListToMapConvertor {
 
 	private String[] keys;
 
+	/**
+	 * Set the list of map key names, the keys are separated by comma ','.
+	 * 
+	 * @param names
+	 */
 	public void setNames(String names) {
 		log.debug("names = {}", names);
 		if (names == null || names.isEmpty()) {
@@ -34,6 +39,11 @@ public class ListToMapConvertor {
 
 	}
 
+	/**
+	 * replace the {@link List} of IN of the body {@link Exchange#getIn()} with {@link Map}.
+	 * 
+	 * @param msg
+	 */
 	public void convert(Exchange msg) {
 		Object o = msg.getIn().getBody();
 		if (o == null) {
@@ -42,6 +52,7 @@ public class ListToMapConvertor {
 		}
 
 		Map<String, Object> map = new HashMap<>();
+		
 		if (o instanceof List<?>) {
 			List<?> list = (List<?>) o;
 			for (int i = 0; i < this.keys.length; i++) {
@@ -54,8 +65,9 @@ public class ListToMapConvertor {
 					log.error("Key name greater than list size = {}, key index {}", list.size(), i);
 				}
 			}
+			msg.getIn().setBody(map);	
 		}
-		msg.getIn().setBody(map);
+		
 		
 	}
 
