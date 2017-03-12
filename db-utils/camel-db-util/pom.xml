@@ -77,6 +77,16 @@
 			<artifactId>camel-csv</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-commands-jolokia</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-metrics</artifactId>
+			
+		</dependency>
 
 		<!-- Database -->
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2 -->
@@ -228,15 +238,25 @@
 								<goals>
 									<goal>java</goal>
 								</goals>
+
+
 							</execution>
 						</executions>
+
 						<configuration>
+
+							<!-- use this option in command line for monitoring -javaagent:/Users/aroonjanthong/Downloads/jolokia-jvm-1.3.5-agent.jar -->
+
 							<mainClass>com.servnize.camel.db.util.CamelApplicationCtl</mainClass>
+
+
 
 							<arguments>
 								<argument>-f</argument>
 								<argument>${project.basedir}/src/test/resources/etc/application.conf</argument>
 								<argument>-r</argument>
+
+
 							</arguments>
 
 							<systemProperties>
@@ -259,6 +279,20 @@
 							</systemProperties>
 						</configuration>
 					</plugin>
+
+					<plugin>
+						<artifactId>maven-dependency-plugin</artifactId>
+						<version>3.0.0</version>
+						<executions>
+							<execution>
+								<id>getClasspathFilenames</id>
+								<goals>
+									<goal>properties</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
 				</plugins>
 			</build>
 		</profile>

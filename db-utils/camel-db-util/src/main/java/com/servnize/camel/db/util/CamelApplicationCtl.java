@@ -37,6 +37,9 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.jolokia.client.J4pClient;
+import org.jolokia.client.request.J4pReadRequest;
+import org.jolokia.client.request.J4pReadResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,8 +110,8 @@ public class CamelApplicationCtl {
 		} catch (Exception e) {
 			log.error("Start application fail", e);
 			return;
-		}finally {
-			
+		} finally {
+
 			app.shutdown();
 		}
 
@@ -579,4 +582,5 @@ public class CamelApplicationCtl {
 			}
 		}
 	}
+
 }

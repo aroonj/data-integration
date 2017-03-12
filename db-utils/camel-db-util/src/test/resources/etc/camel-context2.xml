@@ -97,8 +97,24 @@
 		<property name="dataSource" ref="dataSource3" />
 	</bean>
 
+	<!-- use camel-metrics route policy to gather metrics for all routes -->
+	<bean id="metricsRoutePolicyFactory"
+		class="org.apache.camel.component.metrics.routepolicy.MetricsRoutePolicyFactory" />
+
+	<!-- use camel-metrics message history to gather metrics for all messages 
+		being routed -->
+
+	<bean id="metricsRegistry" class="com.codahale.metrics.MetricRegistry"></bean>
+	<bean id="metricsMessageHistoryFactory"
+		class="org.apache.camel.component.metrics.messagehistory.MetricsMessageHistoryFactory">
+		<property name="metricsRegistry" ref="metricsRegistry"></property>
+	</bean>
+
+
 
 	<camelContext xmlns="http://camel.apache.org/schema/spring">
+
+
 
 		<propertyPlaceholder id="placeholder"
 			location="file:${conf.dir}/sql.properties" />
