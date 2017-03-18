@@ -77,6 +77,7 @@
 			<artifactId>camel-csv</artifactId>
 		</dependency>
 
+		<!-- Monitoring tools -->
 		<dependency>
 			<groupId>org.apache.camel</groupId>
 			<artifactId>camel-commands-jolokia</artifactId>

@@ -109,9 +109,10 @@ public class CamelApplicationCtl {
 
 		} catch (Exception e) {
 			log.error("Start application fail", e);
+			//app.shutdown();
 			return;
 		} finally {
-
+			log.info("Shutdown Application ...");
 			app.shutdown();
 		}
 

@@ -6,7 +6,8 @@
 * ทำตัวเป็น execute engine สำหรับ run camel spring
 * start application
 * graceful shutdown
+* Monitoring and Visualization ด้วย Hawtio
 
+##วิธีใช้งาน
 
-#sss
 

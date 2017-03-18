@@ -30,6 +30,16 @@
 	</bean>
 
 
+	<!-- datasource to the database -->
+	<bean id="dataSourceContry"
+		class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+		<property name="driverClass" value="org.hsqldb.jdbcDriver" />
+		<property name="url" value="jdbc:hsqldb:mem:country" />
+		<property name="username" value="sa" />
+		<property name="password" value="" />
+	</bean>
+
+
 	<bean id="dataSource1" class="org.apache.commons.dbcp2.BasicDataSource"
 		destroy-method="close">
 		<property name="driverClassName" value="org.postgresql.Driver" />
@@ -89,13 +99,10 @@
 		<property name="startDelayedSeconds" value="5" />
 	</bean>
 
-	<bean id="sqlDataSourceHsql" class="org.apache.camel.component.sql.SqlComponent">
-		<property name="dataSource" ref="dataSourceHsql" />
-	</bean>
-
-	<bean id="sqlSrcTest" class="org.apache.camel.component.sql.SqlComponent">
-		<property name="dataSource" ref="dataSource3" />
-	</bean>
+	<!-- <bean id="sqlDataSourceHsql" class="org.apache.camel.component.sql.SqlComponent"> 
+		<property name="dataSource" ref="dataSourceHsql" /> </bean> <bean id="sqlSrcTest" 
+		class="org.apache.camel.component.sql.SqlComponent"> <property name="dataSource" 
+		ref="dataSource3" /> </bean> -->
 
 	<!-- use camel-metrics route policy to gather metrics for all routes -->
 	<bean id="metricsRoutePolicyFactory"
@@ -110,7 +117,7 @@
 		<property name="metricsRegistry" ref="metricsRegistry"></property>
 	</bean>
 
-
+	<bean id="recordAggregator" class="com.servnize.camel.db.util.MapListAggregationStrategy" />
 
 	<camelContext id="context2" xmlns="http://camel.apache.org/schema/spring">
 
@@ -130,12 +137,13 @@
 		<camel:route id="insertCountry">
 
 			<camel:from uri="direct:insertCountry" />
+
 			<camel:log message="INSERT ${body} INTO DATABASE" />
 
 			<camel:doTry>
 
-				<camel:to uri="sqlDataSourceHsql:{{db.ref.tb_country.insert}}" />
-
+				<camel:to
+					uri="sql:{{db.ref.tb_country.insert}}?dataSource=dataSourceHsql&amp;template.queryTimeout=1"></camel:to>
 
 				<camel:doCatch>
 					<camel:exception>java.sql.SQLException</camel:exception>
@@ -148,30 +156,81 @@
 
 		</camel:route>
 
+		<camel:route id="sedaCountry">
+
+			<camel:from
+				uri="seda:insertCountry?concurrentConsumers=4&amp;blockWhenFull=true" />
+
+			<camel:doTry>
+
+				<camel:log message="INSERT ${body} INTO DATABASE" />
+
+				<camel:to
+					uri="sql:{{db.ref.tb_country.insert}}?dataSource=dataSourceHsql&amp;template.queryTimeout=1"></camel:to>
+
+				<camel:doCatch>
+					<camel:exception>java.sql.SQLException</camel:exception>
+					<camel:log message="Error ${body} on insert into database"></camel:log>
+				</camel:doCatch>
+				<camel:doFinally>
+					<camel:log message="Affected record = ${header.CamelSqlUpdateCount}" />
+				</camel:doFinally>
+			</camel:doTry>
+
+		</camel:route>
+
+		<camel:route id="sedaCountryBatch">
+
+			<camel:from
+				uri="seda:insertBatchCountry?concurrentConsumers=1&amp;blockWhenFull=true" />
+
+			<camel:log message="INSERT ${body} INTO DATABASE" />
+
+			<camel:to
+				uri="sql:{{db.ref.tb_country2.insert}}?dataSource=dataSourceContry&amp;template.queryTimeout=1&amp;batch=true"></camel:to>
+
+			<camel:log message="Affected record = ${header.CamelSqlUpdateCount}" />
+
+			<!-- <camel:doTry> <camel:log message="INSERT ${body} INTO DATABASE" /> 
+				<camel:to uri="sql:{{db.ref.tb_country2.insert}}?dataSource=dataSourceHsql&amp;template.queryTimeout=1&amp;batch=true"></camel:to> 
+				<camel:doCatch> <camel:exception>java.sql.SQLException</camel:exception> 
+				<camel:log message="Error ${body} on insert into database"></camel:log> <camel: 
+				<camel:doFinally> <camel:log message="Affected record = ${header.CamelSqlUpdateCount}" 
+				/> </camel:doFinally> </camel:doTry> -->
+		</camel:route>
+
+
 		<camel:route id="referenceData" startupOrder="2"
 			autoStartup="true">
 			<!-- CREATE TABLE -->
 			<from uri="timer:runOnce?repeatCount=1&amp;delay=5s" />
 			<camel:log message="create new table is starting" />
-			<camel:to uri="sqlDataSourceHsql:{{db.ref.tb_country}}" />
+			<camel:to
+				uri="sql:{{db.ref.tb_country}}?dataSource=dataSourceHsql&amp;template.queryTimeout=3" />
 			<camel:log message="Table tb_country is created" />
+
+
+			<camel:to
+				uri="sql:{{db.ref.tb_country2}}?dataSource=dataSourceContry&amp;template.queryTimeout=3" />
+			<camel:log message="Table tb_countries is created" />
+
 
 			<camel:setBody>
 				<camel:simple>CREATE new table with SQL db.create.table.sample.data</camel:simple>
 			</camel:setBody>
 
 			<camel:log message="${body}" loggingLevel="DEBUG"></camel:log>
-			<camel:to uri="direct:notify" />
 
-			<!-- <camel:to uri="direct:importCounty"/> -->
+			<!-- <camel:to uri="direct:notify" /> -->
 
 		</camel:route>
+
 
 
 		<route id="readcsv" startupOrder="3">
 
 			<camel:from
-				uri="file:src/data/?fileName=countries.csv&amp;noop=true&amp;initialDelay=30s&amp;delay=30s" />
+				uri="file:src/data/?fileName=countries.csv&amp;noop=true&amp;initialDelay=15s&amp;delay=30s" />
 
 			<camel:log message="Starting reading CSV file." />
 
@@ -188,12 +247,55 @@
 				<camel:to uri="bean:listtomap?method=convert" />
 				<camel:log message="${body}" />
 
-				<camel:to uri="direct:insertCountry" />
-
-				<camel:log message="Reading CSV file completed." />
+				<camel:to uri="seda:insertCountry" />
 			</camel:split>
 
+			<camel:log message="Reading CSV file completed." />
+
 		</route>
+
+		<route id="readcsv2" startupOrder="4">
+
+			<camel:from
+				uri="file:src/data/?fileName=countries2.csv&amp;noop=true&amp;initialDelay=25s&amp;delay=30s" />
+
+			<camel:log message="Starting reading CSV file." />
+
+			<camel:unmarshal>
+				<camel:csv delimiter="|" />
+			</camel:unmarshal>
+
+			<camel:split>
+				<camel:simple>
+					${in.body}
+				</camel:simple>
+				<camel:setHeader headerName="id">
+					<camel:simple>
+						country
+					</camel:simple>
+				</camel:setHeader>
+
+				<camel:to uri="bean:listtomap?method=convert" />
+
+
+				<aggregate strategyRef="recordAggregator" completionSize="10" completionTimeout="3000">
+					<correlationExpression>
+						<header>id</header>
+					</correlationExpression>
+					<to uri="seda:insertBatchCountry" />
+
+					<!-- <camel:log message="${body}" /> -->
+				</aggregate>
+
+
+			</camel:split>
+
+
+
+			<camel:log message="Reading CSV file completed." />
+
+		</route>
+
 
 	</camelContext>
 
